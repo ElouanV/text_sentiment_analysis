@@ -71,8 +71,8 @@ def train_val(run_type, criterion, dataloader, model, optimizer):
     tot_loss = 0.0
     tot_acc = []
     for mb_idx, batch in tqdm(enumerate(dataloader)):
-        name = batch["name"]
-        label = batch["label"].squeeze(1).long()
+        name = batch["data"]
+        label = batch["label"]
         mask = batch["mask"]
 
         if run_type == "train":

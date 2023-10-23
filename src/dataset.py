@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 import os
 from utils import preprocess_text
 import torch
+import numpy as np
 
 
 class LargeMovieDataset(Dataset):
@@ -36,9 +37,12 @@ class LargeMovieDataset(Dataset):
         while len(sentence_data) < self.max_len:
             sentence_data.append([0] * self.word_embedding_size)
             sentence_mask.append(0)
+        
+        sentence_data = np.array(sentence_data)
+        sentence_mask = np.array(sentence_mask)
 
         data = torch.tensor(sentence_data)
         mask = torch.tensor(sentence_mask)
-        labels = torch.tensor(label)
-        return {"data": data, "mask": mask, "labels": labels}
+        label = torch.tensor(label)
+        return {"data": data, "mask": mask, "label": label}
 
