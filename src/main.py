@@ -8,12 +8,13 @@ if __name__ == '__main__':
     check_dir(MODELS_DIR)
     # Create dataset
     sentances = get_sentances_data(path='data/aclImdb_v1/aclImdb/train')
-    word_embedding_size = 64
-    word2vec_model = Word2Vec(sentances, vector_size=word_embedding_size, window=5, min_count=1, workers=4)
+    word_embedding_size = 16
+    word2vec_model = Word2Vec(sentances, vector_size=word_embedding_size, window=3, min_count=1, workers=4)
     word2vec_model.save(f'{MODELS_DIR}/word2vec_model.model')
+    print(word2vec_model.wv['any'])
     word2vec_model = Word2Vec.load(f'{MODELS_DIR}/word2vec_model.model')
 
-    dataset = LargeMovieDataset(path='data/aclImdb_v1/aclImdb', set='train', embedding_dic=word2vec_model.wv)
+    dataset = LargeMovieDataset(path='data/aclImdb_v1/aclImdb', set='train', embedding_dic=word2vec_model.wv, word_embedding_size=word_embedding_size)
     print('Dataset size:', len(dataset))
     print('First sample:', dataset[0])
     print('Second sample:', dataset[1])
