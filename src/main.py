@@ -4,6 +4,8 @@ import cnn
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 if __name__ == '__main__':
+    MODELS_DIR = 'models'
+    check_dir(MODELS_DIR)
     # Create dataset
     training_set = LargeMovieDataset(path='../aclImdb_v1/', set='train')
     test_set = LargeMovieDataset(path='../aclImdb_v1/', set='test')
