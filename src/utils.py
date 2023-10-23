@@ -12,7 +12,7 @@ def get_sentences_data(path, max_len=1000):
     sentences = []
     for label in ['pos', 'neg']:
         for file in os.listdir(path + '/' + label):
-            with open(path + '/' + label + '/' + file, 'r') as f:
+            with open(path + '/' + label + '/' + file, 'r', encoding='utf-8') as f:
                 sentence = preprocess_text(f.read())
                 if len(sentence) <= max_len:
                     sentences.append(sentence)
