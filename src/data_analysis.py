@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 from dataset import LargeMovieDataset
 from gensim.models import Word2Vec
-from utils import get_sentences_data, check_dir
-from dataviz_utils import word_cloud
+from utils import get_sentences_data, check_dir, word_cloud
+import numpy as np
 
 if __name__ == '__main__':
     MODELS_DIR = 'models'
@@ -23,14 +23,16 @@ if __name__ == '__main__':
     test_set = LargeMovieDataset(path='../data/aclImdb_v1/aclImdb', set='test', embedding_dic=word2vec_model.wv, word_embedding_size=word_embedding_size)
     check_dir('figures')
 
-    # Plot label distribution
-    positive = len(train_set.labels[train_set.labels == 1])
-    negative = len(train_set.labels[train_set.labels == 0])
+    # Count number of positive and negative labels
+
+    positive = (np.array(train_set.labels) == 1).sum()
+    negative = (np.array(train_set.labels) == 0).sum()
     plt.bar(['positive', 'negative'], [positive, negative])
     plt.savefig('figures/label_distribution.png')
     plt.show()
 
     positive_sentance = train_set.sentences[train_set.labels == 1]
     negative_sentance = train_set.sentences[train_set.labels == 0]
-    word_cloud(positive_sentance)
-    word_cloud(negative_sentance)
+    word_cloud(positive_sentance, 'positive_word_cloud')
+    word_cloud(negative_sentance, 'negative_word_cloud')
+

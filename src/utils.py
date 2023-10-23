@@ -5,6 +5,9 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import os
+from torch.utils.tensorboard import SummaryWriter
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
 
 nltk.download('punkt')
 
@@ -18,6 +21,18 @@ def get_sentences_data(path, max_len=1000):
                     sentences.append(sentence)
     return sentences
 
+
+def word_cloud(train, filename):
+    long_string = ','.join(list(train))
+    # Create a WordCloud object
+    wordcloud = WordCloud(background_color="white", max_words=5000, contour_width=3, contour_color='steelblue',width=800, height=400)
+    # Generate a word cloud
+    wordcloud.generate(long_string)
+    # Visualize the word cloud
+    print("Wordcloud for our whole dataset:")
+    wordcloud.to_image()
+    wordcloud.to_file(f"figures/{filename}.png")
+    plt.imshow(wordcloud, interpolation='bilinear')
 
 def check_dir(path):
     if not os.path.exists(path):
@@ -103,6 +118,10 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
     Returns:
         None
     """
+    check_dir('checkpoints')
+    check_dir('runs')
+    best_eval_acc = 0.0
+    writer = SummaryWriter()
     for epoch in range(num_epochs):
         # Training
         epoch_loss, epoch_acc, criterion, train_dataloader, model, optimizer = train_val(
@@ -111,9 +130,19 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         print(
             f"Epoch {epoch}: {epoch_loss/len(train_dataloader)}, {np.array(epoch_acc).mean()}"
         )
-    
+        writer.add_scalar('Training Loss', epoch_loss/len(train_dataloader), epoch)
+        writer.add_scalar('Training Accuracy', np.array(epoch_acc).mean(), epoch)
+
         # Validation
         val_loss, val_acc, criterion, val_dataloader, model, optimizer = train_val(
             "val", criterion, val_dataloader, model, optimizer
         )
+        if (np.array(val_acc).mean() > best_eval_acc):
+            best_eval_acc = np.array(val_acc).mean()
+            torch.save(model.state_dict(), os.path.join('checkpoints', model.get_name() + '.pth'))
         print(f"Val: {val_loss/len(val_dataloader)}, {np.array(val_acc).mean()}")
+        writer.add_scalar('Validation Loss', val_loss/len(val_dataloader), epoch)
+        writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
+
+
+
