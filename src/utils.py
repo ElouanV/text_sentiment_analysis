@@ -8,12 +8,14 @@ import os
 
 nltk.download('punkt')
 
-def get_sentances_data(path):
+def get_sentances_data(path, max_len=1000):
     sentances = []
     for label in ['pos', 'neg']:
         for file in os.listdir(path + '/' + label):
             with open(path + '/' + label + '/' + file, 'r') as f:
-                sentances.append(preprocess_text(f.read()))
+                sentance = preprocess_text(f.read())
+                if len(sentance) <= max_len:
+                    sentances.append(sentance)
     return sentances
 
 
@@ -25,6 +27,10 @@ def check_dir(path):
 def preprocess_text(sentence):
     # Convert to lowercase
     sentence = sentence.lower()
+
+    # Remove <*> with regex
+    import re
+    sentence = re.sub('<[^<]*?>', '', sentence)
     # Remove punctuation
     sentence = sentence.translate(str.maketrans('', '', string.punctuation))
     # Tokenize the sentence into words
