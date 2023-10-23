@@ -1,5 +1,5 @@
 from dataset import LargeMovieDataset
-from cnn import SentimentCNN
+from cnn import SentimentCNN, trainingModelCNN
 from sklearn.feature_extraction.text import TfidfVectorizer
 from dataset import LargeMovieDataset
 from gensim.models import Word2Vec
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(cnnModel.parameters(), lr=0.001)
 
-    train(cnnModel, train_loader, validation_loader, criterion, optimizer, num_epochs=10)
+    trainingModelCNN(cnnModel, train_loader, validation_loader, criterion, optimizer, num_epochs=10)
 
     # test accuracy with the test set
     test_accuracy = 0
