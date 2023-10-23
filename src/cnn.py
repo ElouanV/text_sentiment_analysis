@@ -20,18 +20,3 @@ class SentimentCNN(nn.Module):
         predictions = self.forward(inputs)
         _, predictions = torch.max(predictions, 2)
         self.accuracy = torch.sum(predictions == labels) / labels.size()[0]
-    
-def train(model, data, epochs=10):
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    loss = 0
-    
-    for epoch in range(epochs):
-        for inputs, labels in data:
-            model.zero_grad()
-            predictions = model(inputs)
-            loss = nn.CrossEntropyLoss()(predictions.view(-1, 2), labels)
-            loss.backward()
-            optimizer.step()
-        print('Epoch:', epoch, 'Loss:', loss.item())
-
-    return model
