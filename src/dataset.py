@@ -9,7 +9,7 @@ class LargeMovieDataset(Dataset):
 
         for label in ['pos', 'neg']:
             for file in os.listdir(self.path + '/' + label):
-                with open(self.path + '/' + label + '/' + file, 'r') as f:
+                with open(self.path + '/' + label + '/' + file, 'r', encoding='utf-8') as f:
                     self.data.append(f.read())
                     self.labels.append(1 if label == 'pos' else 0)
 
