@@ -2,13 +2,18 @@ from dataset import LargeMovieDataset
 import os
 import cnn
 from sklearn.feature_extraction.text import TfidfVectorizer
+import utils
 
 if __name__ == '__main__':
     MODELS_DIR = 'models'
-    check_dir(MODELS_DIR)
+    utils.check_dir(MODELS_DIR)
     # Create dataset
     training_set = LargeMovieDataset(path='../aclImdb_v1/', set='train')
     test_set = LargeMovieDataset(path='../aclImdb_v1/', set='test')
+
+    # Split training set into training and validation set (80 for training, 20 for validation)
+    validation_set = training_set[int(len(training_set) * 0.8):]
+    training_set = training_set[:int(len(training_set) * 0.8)]
 
     print("======================================")
     print("Data loaded")
@@ -24,13 +29,22 @@ if __name__ == '__main__':
         y_train.append(training_set[i][1])
     X_train = tfidf.fit_transform(X_train)
 
+    X_val = []
+    y_val = []
+    for i in range(len(validation_set)):
+        X_val.append(validation_set[i][0])
+        y_val.append(validation_set[i][1])
+    X_val = tfidf.transform(X_val)
+
     print("======================================")
     print("Tfidf done")
     print("Number of features:", tfidf.get_feature_names_out())
 
-    # Create model
     cnnModel = cnn.SentimentCNN(vocab_size=10000, embedding_dim=100, hidden_dim=100)
-    cnn.train(cnnModel, training_set, epochs=10)
+    optimizer = cnn.optim.Adam(cnnModel.parameters(), lr=0.001)
+    criterion = cnn.nn.CrossEntropyLoss()
+
+    utils.train(cnnModel, X_train, y_train, X_val, y_val, optimizer, criterion, epochs=10)
 
     print("======================================")
     print("Training done")

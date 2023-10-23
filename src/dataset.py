@@ -11,7 +11,7 @@ class LargeMovieDataset(Dataset):
         self.labels = []
         for label in ['pos', 'neg']:
             for file in os.listdir(self.path + '/' + label):
-                with open(self.path + '/' + label + '/' + file, 'r') as f:
+                with open(self.path + '/' + label + '/' + file, 'r', encoding='utf-8') as f:
                     self.sentances.append(preprocess_text(f.read()))
                 self.labels.append(1 if label == 'pos' else 0)
         self.max_len = max([len(sentance) for sentance in self.sentances])

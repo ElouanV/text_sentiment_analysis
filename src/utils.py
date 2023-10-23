@@ -83,6 +83,20 @@ def train_val(run_type, criterion, dataloader, model, optimizer):
 
 
 def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epochs=10):
+    """
+    Train the model
+
+    Args:
+        model: model to train
+        train_dataloader: dataloader for training
+        val_dataloader: dataloader for validation
+        optimizer: optimizer to use
+        criterion: loss function
+        num_epochs: number of epochs to train
+
+    Returns:
+        None
+    """
     for epoch in range(num_epochs):
         # Training
         epoch_loss, epoch_acc, criterion, train_dataloader, model, optimizer = train_val(
