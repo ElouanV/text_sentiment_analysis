@@ -40,5 +40,5 @@ class LargeMovieDataset(Dataset):
         data = torch.tensor(sentence_data)
         mask = torch.tensor(sentence_mask)
         labels = torch.tensor(label)
-        return data, mask, labels
+        return {"data": data, "mask": mask, "labels": labels}
 

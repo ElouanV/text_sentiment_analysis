@@ -2,3 +2,4 @@ torch
 nltk
 gensim
 matplotlib
+wordcloud
