@@ -8,15 +8,15 @@ import os
 
 nltk.download('punkt')
 
-def get_sentances_data(path, max_len=1000):
-    sentances = []
+def get_sentences_data(path, max_len=1000):
+    sentences = []
     for label in ['pos', 'neg']:
         for file in os.listdir(path + '/' + label):
             with open(path + '/' + label + '/' + file, 'r') as f:
-                sentance = preprocess_text(f.read())
-                if len(sentance) <= max_len:
-                    sentances.append(sentance)
-    return sentances
+                sentence = preprocess_text(f.read())
+                if len(sentence) <= max_len:
+                    sentences.append(sentence)
+    return sentences
 
 
 def check_dir(path):
