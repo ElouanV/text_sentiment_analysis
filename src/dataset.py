@@ -10,6 +10,7 @@ import os
 class LargeMovieDataset(Dataset):
     def __init__(self, path, set='train', embedding_dic=None, max_len=1000, word_embedding_size=128):
         self.path = os.path.join(path, set)
+        assert embedding_dic is not None, 'embedding_dic must be provided'
         self.sentences = []
         self.labels = []
         for label in ['pos', 'neg']:
