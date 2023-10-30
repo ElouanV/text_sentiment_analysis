@@ -8,8 +8,19 @@ import os
 from torch.utils.tensorboard import SummaryWriter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-
+import random
 nltk.download('punkt')
+
+
+def seed_everything(seed=10):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+seed_everything()
+
 
 def get_sentences_data(path, max_len=1000):
     sentences = []
@@ -33,6 +44,7 @@ def word_cloud(train, filename):
     wordcloud.to_image()
     wordcloud.to_file(f"figures/{filename}.png")
     plt.imshow(wordcloud, interpolation='bilinear')
+
 
 def check_dir(path):
     if not os.path.exists(path):
@@ -71,7 +83,7 @@ def train_val(run_type, criterion, dataloader, model, optimizer):
     tot_loss = 0.0
     tot_acc = []
     for mb_idx, batch in tqdm(enumerate(dataloader)):
-        name = batch["data"]
+        data = batch["data"]
         label = batch["label"]
         mask = batch["mask"]
 
@@ -81,10 +93,10 @@ def train_val(run_type, criterion, dataloader, model, optimizer):
 
         # Forward pass
         if run_type == "train":
-            out = forward_pass(name, mask, model)
+            out = forward_pass(data, mask, model)
         elif run_type == "val":
             with torch.no_grad():
-                out = forward_pass(name, mask, model)
+                out = forward_pass(data, mask, model)
 
         # Compute loss
         loss = criterion(out, label)
@@ -143,6 +155,26 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         print(f"Val: {val_loss/len(val_dataloader)}, {np.array(val_acc).mean()}")
         writer.add_scalar('Validation Loss', val_loss/len(val_dataloader), epoch)
         writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
+
+
+
+
+def get_model_param(model):
+    """
+
+    :param model:
+    :return:
+    """
+    return sum(
+        param.numel() for param in model.parameters()
+    )
+
+
+
+
+
+
+
 
 
 

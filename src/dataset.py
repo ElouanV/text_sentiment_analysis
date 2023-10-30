@@ -4,16 +4,17 @@ import os
 from utils import preprocess_text
 import torch
 import numpy as np
+import os
 
 
 class LargeMovieDataset(Dataset):
     def __init__(self, path, set='train', embedding_dic=None, max_len=1000, word_embedding_size=128):
-        self.path = path + '/' + set
+        self.path = os.path.join(path, set)
         self.sentences = []
         self.labels = []
         for label in ['pos', 'neg']:
-            for file in os.listdir(self.path + '/' + label):
-                with open(self.path + '/' + label + '/' + file, 'r', encoding='utf-8') as f:
+            for file in os.listdir(os.path.join(self.path, label)):
+                with open(os.path.join(self.path, label, file), 'r', encoding='utf-8') as f:
                     sentence = preprocess_text(f.read())
                     if len(sentence) <= max_len:
                         self.sentences.append(sentence)
@@ -24,25 +25,31 @@ class LargeMovieDataset(Dataset):
         print(f'max_len: {self.max_len}')
 
     def __len__(self):
+        """
+        Return the length of the dataset
+        Returns: int: length of the dataset
+        """
         return len(self.sentences)
 
     def __getitem__(self, idx):
+        """
+        Return the data and label of the idx-th sample
+        :param idx: int: index of the sample
+        Returns: dict: {"data": data, "mask": mask, "label": label}
+        """
         sentence = self.sentences[idx]
         label = self.labels[idx]
-        sentence_data = []
-        sentence_mask = []
-        for word in sentence:
-            sentence_data.append(self.embedding_dic[word])
-            sentence_mask.append(1)
-        while len(sentence_data) < self.max_len:
-            sentence_data.append([0] * self.word_embedding_size)
-            sentence_mask.append(0)
+        sentence_data = np.zeros((self.max_len, self.word_embedding_size))
+        sentence_mask = np.zeros(self.max_len)
+        for i, word in enumerate(sentence):
+            sentence_data[i] = self.embedding_dic[word] if word in self.embedding_dic else np.zeros(self.word_embedding_size)
+            sentence_mask[i] = 1
         
         sentence_data = np.array(sentence_data)
         sentence_mask = np.array(sentence_mask)
 
-        data = torch.tensor(sentence_data)
-        mask = torch.tensor(sentence_mask)
+        data = torch.tensor(sentence_data, dtype=torch.float)
+        mask = torch.tensor(sentence_mask, dtype=torch.float)
         label = torch.tensor(label)
         return {"data": data, "mask": mask, "label": label}
 
