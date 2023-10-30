@@ -67,18 +67,7 @@ def preprocess_text(sentence):
     return words
 
 
-def forward_pass(name, mask, model):
-    out = [None] * name.shape[0]
-    hidden = torch.zeros(name.shape[0], 57)
-    for i in range(name.shape[1]):
-        character = name[:, i].squeeze(1)
-        out_, hidden = model(character, hidden)
 
-        for batch_id in range(name.shape[0]):
-            if mask[batch_id, i] == 1:
-                out[batch_id] = out_[batch_id].unsqueeze(0)
-    out = torch.cat(out, dim=0)
-    return out
 
 
 def train_val(run_type, criterion, dataloader, model, optimizer):
@@ -95,10 +84,10 @@ def train_val(run_type, criterion, dataloader, model, optimizer):
 
         # Forward pass
         if run_type == "train":
-            out = forward_pass(data, mask, model)
+            out = model(data, mask)
         elif run_type == "val":
             with torch.no_grad():
-                out = forward_pass(data, mask, model)
+                out = model(data, mask)
 
         # Compute loss
         loss = criterion(out, label)
