@@ -11,6 +11,11 @@ if __name__ == '__main__':
     sentences = get_sentences_data(path='../data/aclImdb_v1/aclImdb/train', max_len=10000)
     # Plot length of sentences
     plt.hist([len(sentence) for sentence in sentences], bins=100)
+    plt.yscale('log')
+    plt.xlabel('Length of sentence')
+    plt.ylabel('Number of sentences')
+    plt.title('Distribution of sentence length')
+    plt.savefig('figures/sentence_length.png')
     plt.show()
     word_embedding_size = 16
     sentences = get_sentences_data(path='../data/aclImdb_v1/aclImdb/train')

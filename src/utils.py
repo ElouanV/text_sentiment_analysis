@@ -8,8 +8,21 @@ import os
 from torch.utils.tensorboard import SummaryWriter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+import random
+from gensim.models import Word2Vec
 
 nltk.download('punkt')
+
+
+def seed_everything(seed=10):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+seed_everything()
+
 
 def get_sentences_data(path, max_len=1000):
     sentences = []
@@ -34,6 +47,7 @@ def word_cloud(train, filename):
     wordcloud.to_file(f"figures/{filename}.png")
     plt.imshow(wordcloud, interpolation='bilinear')
 
+
 def check_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
@@ -53,25 +67,14 @@ def preprocess_text(sentence):
     return words
 
 
-def forward_pass(name, mask, model):
-    out = [None] * name.shape[0]
-    hidden = torch.zeros(name.shape[0], 57)
-    for i in range(name.shape[1]):
-        character = name[:, i].squeeze(1)
-        out_, hidden = model(character, hidden)
 
-        for batch_id in range(name.shape[0]):
-            if mask[batch_id, i] == 1:
-                out[batch_id] = out_[batch_id].unsqueeze(0)
-    out = torch.cat(out, dim=0)
-    return out
 
 
 def train_val(run_type, criterion, dataloader, model, optimizer):
     tot_loss = 0.0
     tot_acc = []
     for mb_idx, batch in tqdm(enumerate(dataloader)):
-        name = batch["data"]
+        data = batch["data"]
         label = batch["label"]
         mask = batch["mask"]
 
@@ -81,10 +84,10 @@ def train_val(run_type, criterion, dataloader, model, optimizer):
 
         # Forward pass
         if run_type == "train":
-            out = forward_pass(name, mask, model)
+            out = model(data, mask)
         elif run_type == "val":
             with torch.no_grad():
-                out = forward_pass(name, mask, model)
+                out = model(data, mask)
 
         # Compute loss
         loss = criterion(out, label)
@@ -143,6 +146,28 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         print(f"Val: {val_loss/len(val_dataloader)}, {np.array(val_acc).mean()}")
         writer.add_scalar('Validation Loss', val_loss/len(val_dataloader), epoch)
         writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
+
+
+def get_model_param(model):
+    """
+    Get the number of parameters of a model
+    :param model: model to get the number of parameters
+    :return: int: number of parameters
+    """
+    return sum(
+        param.numel() for param in model.parameters()
+    )
+
+
+def prepare_word2vec(path, models_dir, word_embedding_size=128):
+    sentences = get_sentences_data(path=os.path.join(path, 'train'), max_len=10000)
+    sentences.extend(get_sentences_data(path=os.path.join(path, 'test'), max_len=10000))
+    word2vec_model = Word2Vec(sentences, vector_size=word_embedding_size, window=3, min_count=1, workers=4)
+    word2vec_model.save(f'{models_dir}/word2vec_model.model')
+    return word2vec_model
+
+
+
 
 
 
