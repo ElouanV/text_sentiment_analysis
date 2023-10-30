@@ -9,6 +9,8 @@ from torch.utils.tensorboard import SummaryWriter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import random
+from gensim.models import Word2Vec
+
 nltk.download('punkt')
 
 
@@ -157,21 +159,23 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
 
 
-
-
 def get_model_param(model):
     """
-
-    :param model:
-    :return:
+    Get the number of parameters of a model
+    :param model: model to get the number of parameters
+    :return: int: number of parameters
     """
     return sum(
         param.numel() for param in model.parameters()
     )
 
 
-
-
+def prepare_word2vec(path, models_dir, word_embedding_size=128):
+    sentences = get_sentences_data(path=os.path.join(path, 'train'), max_len=10000)
+    sentences.extend(get_sentences_data(path=os.path.join(path, 'test'), max_len=10000))
+    word2vec_model = Word2Vec(sentences, vector_size=word_embedding_size, window=3, min_count=1, workers=4)
+    word2vec_model.save(f'{models_dir}/word2vec_model.model')
+    return word2vec_model
 
 
 
