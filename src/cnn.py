@@ -10,9 +10,9 @@ class SentimentCNN(nn.Module):
     def __init__(self, len_word, hidden_size, num_classes, dropout=0.5):
         super().__init__()       
         # create a cnn 
-        self.conv = nn.ModuleList([nn.Conv1d(in_channels=len_word, out_channels=hidden_size, kernel_size=k, dtype=torch.double, stride=1) for k in [3, 4, 5]])
+        self.conv = nn.ModuleList([nn.Conv1d(in_channels=len_word, out_channels=hidden_size, kernel_size=k, stride=1) for k in [3, 4, 5]])
         self.dropout = nn.Dropout(dropout)
-        self.fc = nn.Linear(hidden_size*3, num_classes, dtype=torch.double)
+        self.fc = nn.Linear(hidden_size*3, num_classes)
 
     def forward(self, x, hidden):
         #x = torch.unsqueeze(x, dim=1)
