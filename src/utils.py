@@ -91,9 +91,8 @@ def rnn_forward_call(model, data, mask):
 def train_val(run_type, criterion, dataloader, model, optimizer, device, epoch):
     tot_loss = 0.0
     tot_acc = []
-    # Change tqdm progress bar color based on run_type
     color = "green" if run_type == "train" else "blue"
-    with tqdm(dataloader, unit="batch", leave=False, color=color) as tepoch:
+    with tqdm(dataloader, unit="batch", colour=color) as tepoch:
         for batch in tepoch:
             data = batch["data"]
             label = batch["label"]
@@ -103,22 +102,13 @@ def train_val(run_type, criterion, dataloader, model, optimizer, device, epoch):
             label = label.to(device)
             mask = mask.to(device)
 
-            if run_type == "train":
-                # zero the parameter gradients
-                optimizer.zero_grad()
-
             # Forward pass
             if run_type == "train":
-                if model.__class__.__name__ == "RNN":
-                    out = model(data, mask)
-                else:
-                    out = model(data, mask)
+                optimizer.zero_grad()
+                out = model(data, mask)
             elif run_type == "val":
                 with torch.no_grad():
-                    if model.__class__.__name__ == "RNN":
-                        out = model(data, mask)
-                    else:
-                        out = model(data, mask)
+                    out = model(data, mask)
             # Compute loss
             loss = criterion(out, label)
             if run_type == "train":
@@ -154,7 +144,8 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
     check_dir('checkpoints')
     check_dir('runs')
     best_eval_acc = 0.0
-    writer = SummaryWriter()
+    # Create a TensorBoard summary writer to log data with a specific filename model_name_datetime
+    writer = SummaryWriter(log_dir=f'runs/{model.__class__.__name__}_{datetime.now().strftime("%Y%m%d-%H%M%S")}')
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
     print(f'Using device: {device} to train\n')
@@ -178,7 +169,6 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         writer.add_scalar('Validation Loss', val_loss / len(val_dataloader), epoch)
         writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
     writer.close()
-
 
 
 def get_model_param(model):
