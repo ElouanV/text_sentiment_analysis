@@ -170,7 +170,25 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
     writer.close()
 
+def test(model, test_dataloader, criterion):
+    """
+    Test the model
 
+    Args:
+        model: model to test
+        test_dataloader: dataloader for testing
+        criterion: loss function
+
+    Returns:
+        None
+    """
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    print(f'Using device: {device} to test\n')
+    test_loss, test_acc, criterion, test_dataloader, model, optimizer = train_val(
+        "test", criterion, test_dataloader, model, None, device, 0
+    )
+    print(f"Test: {test_loss / len(test_dataloader)}, {np.array(test_acc).mean()}")
 def get_model_param(model):
     """
     Get the number of parameters of a model

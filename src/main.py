@@ -3,10 +3,12 @@ from gensim.models import Word2Vec
 from utils import get_sentences_data, check_dir, train, seed_everything, prepare_word2vec
 from torch.utils.data import DataLoader
 import torch
-from models import TextClassificationTransformer
-from cnn import SentimentCNN
-seeds = [3, 7, 42, 666]
 import torch.optim as optim
+from cnn import SentimentCNN
+
+
+seeds = [3, 7, 42, 666]
+
 if __name__ == '__main__':
     BATCH_SIZE = 32
     train_path = 'data/aclImdb_v1/aclImdb/train'
@@ -36,5 +38,28 @@ if __name__ == '__main__':
     # Train model
     model = SentimentCNN(len_word=word_embedding_size, hidden_size=128, num_classes=2)
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
     train(model, train_dataloader, val_dataloader, criterion=criterion, optimizer=optimizer, num_epochs=10)
+
+    # Load model
+    model.load_state_dict(torch.load('checkpoints/SentimentCNN.pth'))
+
+    # Test model on the test set and compute the accuracy
+    test_accuracy = 0
+    for batch in test_dataloader:
+        inputs = batch['data']
+        mask = batch['mask']
+        labels = batch['label']
+
+        with torch.no_grad():
+            predictions = model(inputs, mask)
+            _, predictions = torch.max(predictions, 1)
+            test_accuracy += torch.sum(predictions == labels)
+    test_accuracy = test_accuracy / float(len(test_set))
+    print('Test accuracy:', test_accuracy.item())
+
+    print(f'Number of parameters: {sum(p.numel() for p in model.parameters())}')
+
+
+
+
