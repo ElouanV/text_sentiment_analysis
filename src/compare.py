@@ -44,7 +44,7 @@ class Model(nn.Module):
 
 def data_loader_rrn(MODEL_PATH, DATA_PATH):
     word_embedding_size = 16
-    word2vec_model = Word2Vec.load(MODEL_PATH + "word2vec_model.model")
+    word2vec_model = Word2Vec.load(MODEL_PATH + "word2vec_model.models")
 
     train_set = LargeMovieDataset(path=DATA_PATH, set="train", embedding_dic=word2vec_model.wv, word_embedding_size=word_embedding_size)
     test_set = LargeMovieDataset(path=DATA_PATH, set='test', embedding_dic=word2vec_model.wv, word_embedding_size=word_embedding_size)
@@ -86,7 +86,7 @@ def train_model(model_list, nb):
     if 'rnn_model' in model_list:
         train_dataloader, val_dataloader, test_dataloader = data_loader_rrn(MODEL_PATH, DATA_PATH)
         rnn_model, optimizer_rnn, criterion_rnn = model_config_rnn()
-        #train(model=rnn_model, train_dataloader=train_dataloader, val_dataloader=val_dataloader, optimizer=optimizer_rnn, criterion=criterion_rnn, num_epochs=2)
+        #train(models=rnn_model, train_dataloader=train_dataloader, val_dataloader=val_dataloader, optimizer=optimizer_rnn, criterion=criterion_rnn, num_epochs=2)
 
         times = []
         results = []

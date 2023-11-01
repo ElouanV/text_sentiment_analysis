@@ -1,0 +1,5 @@
+n_epoch: 10
+saving_path: 'models'
+data_path: 'data/aclImdb_v1/aclImdb/'
+batch_size: 32
+seed:  [3, 7, 42, 666]

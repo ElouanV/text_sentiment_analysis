@@ -1,3 +1,5 @@
+import os.path
+
 from dataset import LargeMovieDataset
 from gensim.models import Word2Vec
 from utils import check_dir, train, seed_everything, prepare_word2vec
@@ -5,16 +7,20 @@ from torch.utils.data import DataLoader
 import torch
 import torch.optim as optim
 from model.cnn import TextCNN
+import hydra
+from omegaconf import OmegaConf
 
 
 seeds = [3, 7, 42, 666]
 
-if __name__ == '__main__':
+@hydra.main(version_base=None, config_path="conf", config_name="config")
+def main(config):
+    print(OmegaConf.to_yaml(config))
     BATCH_SIZE = 32
     train_path = 'data/aclImdb_v1/aclImdb/train'
     data_path = 'data/aclImdb_v1/aclImdb'
     seed_everything(3)
-    MODELS_DIR = 'model'
+    MODELS_DIR = 'checkpoints'
     check_dir(MODELS_DIR)
     # Create dataset
     word_embedding_size = 64
@@ -35,16 +41,16 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=True)
     test_dataloader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=True)
 
-    # Train model
+    # Train models
     model = TextCNN(len_word=word_embedding_size, hidden_size=128, num_classes=2)
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     train(model, train_dataloader, val_dataloader, criterion=criterion, optimizer=optimizer, num_epochs=10)
 
-    # Load model
+    # Load models
     model.load_state_dict(torch.load('checkpoints/SentimentCNN.pth'))
 
-    # Test model on the test set and compute the accuracy
+    # Test models on the test set and compute the accuracy
     test_accuracy = 0
     for batch in test_dataloader:
         inputs = batch['data']
@@ -59,6 +65,11 @@ if __name__ == '__main__':
     print('Test accuracy:', test_accuracy.item())
 
     print(f'Number of parameters: {sum(p.numel() for p in model.parameters())}')
+
+
+if __name__ == '__main__':
+    import sys
+    main()
 
 
 

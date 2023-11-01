@@ -74,9 +74,6 @@ def preprocess_text(sentence):
     return words
 
 
-
-
-
 def train_val(run_type, criterion, dataloader, model, optimizer, device, epoch):
     tot_loss = 0.0
     tot_acc = []
@@ -91,40 +88,36 @@ def train_val(run_type, criterion, dataloader, model, optimizer, device, epoch):
             data = data.to(device)
             label = label.to(device)
             mask = mask.to(device)
+
             if run_type == "train":
-                # zero the parameter gradients
                 optimizer.zero_grad()
-
-                # Forward pass
-                if run_type == "train":
-                    optimizer.zero_grad()
+                out = model(data, mask)
+            elif run_type == "val" or run_type == "test":
+                with torch.no_grad():
                     out = model(data, mask)
-                elif run_type == "val" or run_type == "test":
-                    with torch.no_grad():
-                        out = model(data, mask)
                 # Compute loss
-                loss = criterion(out, label)
-                if run_type == "train":
-                    # Compute gradients
-                    loss.backward()
-                    # Backward pass - model update
-                    optimizer.step()
+            loss = criterion(out, label)
+            if run_type == "train":
+                # Compute gradients
+                loss.backward()
+                # Backward pass - models update
+                optimizer.step()
 
-                # Logging
-                tot_loss += loss.item()
-                acc = (out.argmax(dim=1) == label).tolist()
-                tot_acc.extend(acc)
-                acc_str = f"{100. * np.array(acc).mean():.2f}%"
-                tepoch.set_postfix(loss=loss.item(), acc=acc_str, epoch=epoch, set=run_type)
+            # Logging
+            tot_loss += loss.item()
+            acc = (out.argmax(dim=1) == label).tolist()
+            tot_acc.extend(acc)
+            acc_str = f"{100. * np.array(acc).mean():.2f}%"
+            tepoch.set_postfix(loss=loss.item(), acc=acc_str, epoch=epoch, set=run_type)
     return tot_loss, tot_acc, criterion, dataloader, model, optimizer
 
 
 def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epochs=10):
     """
-    Train the model
+    Train the models
 
     Args:
-        model: model to train
+        model: models to train
         train_dataloader: dataloader for training
         val_dataloader: dataloader for validation
         optimizer: optimizer to use
@@ -151,25 +144,26 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         # print(f"Epoch {epoch}, loss: {epoch_loss / len(train_dataloader)}, accuracy: {np.array(epoch_acc).mean()}%")
         writer.add_scalar('Training Loss', epoch_loss / len(train_dataloader), epoch)
         writer.add_scalar('Training Accuracy', np.array(epoch_acc).mean(), epoch)
-        print(f'Train: loss: {epoch_loss/len(train_dataloader)}, accuracy: {np.array(epoch_acc).mean() * 100}%')
+        print(f'Train: loss: {epoch_loss / len(train_dataloader)}, accuracy: {np.array(epoch_acc).mean() * 100}%')
         # Validation
         val_loss, val_acc, criterion, val_dataloader, model, optimizer = train_val(
             "val", criterion, val_dataloader, model, optimizer, device, epoch
         )
         if (np.array(val_acc).mean() > best_eval_acc):
             best_eval_acc = np.array(val_acc).mean()
-            torch.save(model.state_dict(), os.path.join('checkpoints', model.__class__.__name__() + '.pth'))
-        print(f"Validation: loss: {val_loss/len(val_dataloader)}, accuracy: {np.array(val_acc).mean()* 100}%")
-        writer.add_scalar('Validation Loss', val_loss/len(val_dataloader), epoch)
+            torch.save(model.state_dict(), os.path.join('checkpoints', model.__class__.__name__ + '.pth'))
+        print(f"Validation: loss: {val_loss / len(val_dataloader)}, accuracy: {np.array(val_acc).mean() * 100}%")
+        writer.add_scalar('Validation Loss', val_loss / len(val_dataloader), epoch)
         writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
     writer.close()
 
+
 def test(model, test_dataloader, criterion):
     """
-    Test the model
+    Test the models
 
     Args:
-        model: model to test
+        model: models to test
         test_dataloader: dataloader for testing
         criterion: loss function
 
@@ -183,10 +177,12 @@ def test(model, test_dataloader, criterion):
         "test", criterion, test_dataloader, model, None, device, 0
     )
     print(f"Test: {test_loss / len(test_dataloader)}, {np.array(test_acc).mean()}")
+
+
 def get_model_param(model):
     """
-    Get the number of parameters of a model
-    :param model: model to get the number of parameters
+    Get the number of parameters of a models
+    :param model: models to get the number of parameters
     :return: int: number of parameters
     """
     return sum(

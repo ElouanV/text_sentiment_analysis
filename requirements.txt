@@ -4,3 +4,6 @@ gensim
 matplotlib
 wordcloud
 tensorboard
+jupyter
+hydra-core
+omegaconf

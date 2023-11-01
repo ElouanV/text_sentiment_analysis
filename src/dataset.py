@@ -20,10 +20,10 @@ class LargeMovieDataset(Dataset):
                     if len(sentence) <= max_len:
                         self.sentences.append(sentence)
                         self.labels.append(1 if label == 'pos' else 0)
-        self.max_len = max([len(sentence) for sentence in self.sentences])
+        self.max_len = max_len
         self.embedding_dic = embedding_dic
         self.word_embedding_size = word_embedding_size
-        print(f'max_len: {self.max_len}')
+        print(f'Max length of the sentences: {self.max_len}')
 
     def __len__(self):
         """
