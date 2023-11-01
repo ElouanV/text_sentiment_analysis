@@ -27,6 +27,7 @@ class SentimentLSTM(nn.Module):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layer = num_layer
+        self.bidirectional_bool = bidirectional_bool
         self.lstm = nn.LSTM(self.input_size, int(self.hidden_size / (bidirectional_bool + 1)), num_layers=num_layer, batch_first=True, bidirectional=bidirectional_bool)
         self.fc = nn.Linear(self.hidden_size, 2)
 

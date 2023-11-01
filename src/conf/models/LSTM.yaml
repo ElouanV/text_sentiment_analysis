@@ -3,6 +3,6 @@ name: 'lstm'
 param:
   hidden_size: [ 32, 64, 128 ]
   num_layers: [ 1, 2, 3 ]
-  bidirectionnal: [ True, False ]
+  bidirectional: [ True, False ]
 
 
