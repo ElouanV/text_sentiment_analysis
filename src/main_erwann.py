@@ -1,5 +1,5 @@
 from dataset import LargeMovieDataset
-from cnn import SentimentCNN
+from cnn import TextCNN, SequentialCNN
 from sklearn.feature_extraction.text import TfidfVectorizer
 from dataset import LargeMovieDataset
 from gensim.models import Word2Vec
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     validation_loader = DataLoader(validation_set, batch_size=32, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=32, shuffle=True)
 
-    cnnModel = SentimentCNN(len_word=word_embedding_size, hidden_size=32, num_classes=2, dropout=0.5)
+    cnnModel = SequentialCNN(len_word=word_embedding_size, hidden_size=100, num_classes=2, dropout=0.5)
     optimizer = optim.Adam(cnnModel.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
 

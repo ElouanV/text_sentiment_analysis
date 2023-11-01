@@ -32,8 +32,7 @@ class SequentialCNN(nn.Module):
     def __init__(self, len_word, hidden_size, num_classes, dropout=0.5):
         super().__init__()       
         # create a cnn 
-        self.conv1 = nn.Conv1d(in_channels=len_word, out_channels=hidden_size, kernel_size=3)
-        self.conv2 = nn.Conv1d(in_channels=hidden_size, out_channels=hidden_size, kernel_size=1)
+        self.conv1 = nn.Conv1d(in_channels=len_word, out_channels=hidden_size, kernel_size=5)
         self.dropout = nn.Dropout(dropout)
         self.fc = nn.Linear(hidden_size, num_classes)
 
@@ -41,9 +40,7 @@ class SequentialCNN(nn.Module):
         #x = torch.unsqueeze(x, dim=1)
         x.transpose_(1, 2)
         x = F.relu(self.conv1(x))
-        x = F.max_pool1d(x, x.size(-1))
-        x = F.relu(self.conv2(x))
-        x = F.max_pool1d(x, x.size(-1))
+        x = F.max_pool1d(x, x.size(-1)).squeeze(dim=-1)
         x = self.dropout(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
