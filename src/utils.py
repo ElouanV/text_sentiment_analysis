@@ -72,10 +72,17 @@ def preprocess_text(sentence):
 def train_val(run_type, criterion, dataloader, model, optimizer):
     tot_loss = 0.0
     tot_acc = []
+
+    model = model.to(device)
+
     for mb_idx, batch in tqdm(enumerate(dataloader)):
         data = batch["data"]
         label = batch["label"]
         mask = batch["mask"]
+
+        data = data.to(device)
+        label = label.to(device)
+        mask = mask.to(device)
 
         if run_type == "train":
             # zero the parameter gradients
@@ -141,7 +148,7 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         )
         if (np.array(val_acc).mean() > best_eval_acc):
             best_eval_acc = np.array(val_acc).mean()
-            torch.save(model.state_dict(), os.path.join('checkpoints', model.get_name() + '.pth'))
+            torch.save(model.state_dict(), os.path.join('checkpoints', model.__class__.__name__ + '.pt'))
         print(f"Val: {val_loss/len(val_dataloader)}, {np.array(val_acc).mean()}")
         writer.add_scalar('Validation Loss', val_loss/len(val_dataloader), epoch)
         writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
