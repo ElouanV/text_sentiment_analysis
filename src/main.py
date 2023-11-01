@@ -4,7 +4,7 @@ from utils import check_dir, train, seed_everything, prepare_word2vec
 from torch.utils.data import DataLoader
 import torch
 import torch.optim as optim
-from src.model.cnn import TextCNN
+from model.cnn import TextCNN
 
 
 seeds = [3, 7, 42, 666]

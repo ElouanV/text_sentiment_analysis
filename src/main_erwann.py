@@ -1,4 +1,5 @@
-from src.model.cnn import SentimentCNN
+from dataset import LargeMovieDataset
+from model.cnn import TextCNN, SequentialCNN
 from dataset import LargeMovieDataset
 from gensim.models import Word2Vec
 from utils import get_sentences_data, check_dir, train
@@ -6,9 +7,10 @@ from torch.utils.data import DataLoader
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import numpy as np
 
 if __name__ == '__main__':
-    MODELS_DIR = 'model'
+    MODELS_DIR = 'models'
     check_dir(MODELS_DIR)
     # Create dataset
 
@@ -33,7 +35,7 @@ if __name__ == '__main__':
     validation_loader = DataLoader(validation_set, batch_size=32, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=32, shuffle=True)
 
-    cnnModel = SentimentCNN(len_word=word_embedding_size, hidden_size=32, num_classes=2, dropout=0.5)
+    cnnModel = SequentialCNN(len_word=word_embedding_size, hidden_size=32, num_classes=2, dropout=0.5)
     optimizer = optim.Adam(cnnModel.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
 
