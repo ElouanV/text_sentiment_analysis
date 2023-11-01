@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import random
 from gensim.models import Word2Vec
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using {device}")
+
 nltk.download('punkt')
 
 
@@ -65,10 +68,6 @@ def preprocess_text(sentence):
     # Tokenize the sentence into words
     words = word_tokenize(sentence)
     return words
-
-
-
-
 
 def train_val(run_type, criterion, dataloader, model, optimizer):
     tot_loss = 0.0
