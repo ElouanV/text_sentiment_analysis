@@ -1,10 +1,10 @@
 from dataset import LargeMovieDataset
 from gensim.models import Word2Vec
-from utils import get_sentences_data, check_dir, train, seed_everything, prepare_word2vec
+from utils import check_dir, train, seed_everything, prepare_word2vec
 from torch.utils.data import DataLoader
 import torch
 import torch.optim as optim
-from cnn import SentimentCNN
+from src.model.cnn import TextCNN
 
 
 seeds = [3, 7, 42, 666]
@@ -14,7 +14,7 @@ if __name__ == '__main__':
     train_path = 'data/aclImdb_v1/aclImdb/train'
     data_path = 'data/aclImdb_v1/aclImdb'
     seed_everything(3)
-    MODELS_DIR = 'models'
+    MODELS_DIR = 'model'
     check_dir(MODELS_DIR)
     # Create dataset
     word_embedding_size = 64
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     test_dataloader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=True)
 
     # Train model
-    model = SentimentCNN(len_word=word_embedding_size, hidden_size=128, num_classes=2)
+    model = TextCNN(len_word=word_embedding_size, hidden_size=128, num_classes=2)
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     train(model, train_dataloader, val_dataloader, criterion=criterion, optimizer=optimizer, num_epochs=10)

@@ -76,7 +76,7 @@ def modele_config_cnn():
     pass
 
 def train_model(model_list, nb):
-    MODEL_PATH = './models/'
+    MODEL_PATH = 'model/'
     DATA_PATH = './data/aclImdb_v1/aclImdb'
 
     seed = generate_seed(nb)

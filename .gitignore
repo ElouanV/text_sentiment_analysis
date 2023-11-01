@@ -5,6 +5,12 @@ __pycache__/
 data/
 checkpoints/
 models/
+*.pt
+*.pth
+*.pkl
+*.model
+*.h5
+*.npy
 runs/
 # C extensions
 *.so

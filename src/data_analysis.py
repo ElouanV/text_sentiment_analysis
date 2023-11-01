@@ -5,7 +5,7 @@ from utils import get_sentences_data, check_dir, word_cloud
 import numpy as np
 
 if __name__ == '__main__':
-    MODELS_DIR = 'models'
+    MODELS_DIR = 'model'
     check_dir(MODELS_DIR)
     # Create dataset
     sentences = get_sentences_data(path='../data/aclImdb_v1/aclImdb/train', max_len=10000)

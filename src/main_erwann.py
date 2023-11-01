@@ -1,6 +1,4 @@
-from dataset import LargeMovieDataset
-from cnn import SentimentCNN
-from sklearn.feature_extraction.text import TfidfVectorizer
+from src.model.cnn import SentimentCNN
 from dataset import LargeMovieDataset
 from gensim.models import Word2Vec
 from utils import get_sentences_data, check_dir, train
@@ -8,10 +6,9 @@ from torch.utils.data import DataLoader
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
 
 if __name__ == '__main__':
-    MODELS_DIR = 'models'
+    MODELS_DIR = 'model'
     check_dir(MODELS_DIR)
     # Create dataset
 
