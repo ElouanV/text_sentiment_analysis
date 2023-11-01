@@ -3,9 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 data/
+checkpoints/
+models/
+runs/
 # C extensions
 *.so
-
+.idea/
 # Distribution / packaging
 .Python
 build/
