@@ -1,5 +1,5 @@
 from dataset import LargeMovieDataset
-from cnn import SentimentCNN, trainingModelCNN
+from cnn import SentimentCNN
 from sklearn.feature_extraction.text import TfidfVectorizer
 from dataset import LargeMovieDataset
 from gensim.models import Word2Vec
@@ -14,8 +14,17 @@ if __name__ == '__main__':
     MODELS_DIR = 'models'
     check_dir(MODELS_DIR)
     # Create dataset
+
+    print("Word2Vec")
+
+    sentences = get_sentences_data(path='../aclImdb_v1/train')
     word_embedding_size = 16
+    word2vec_model = Word2Vec(sentences, vector_size=word_embedding_size, window=3, min_count=1, workers=4)
+    word2vec_model.save(f'{MODELS_DIR}/word2vec_model.model')
+
     word2vec_model = Word2Vec.load(f'{MODELS_DIR}/word2vec_model.model')
+
+    print("Loading data")
 
     train_set = LargeMovieDataset(path='../aclImdb_v1/', set='train', embedding_dic=word2vec_model.wv, word_embedding_size=word_embedding_size)
     test_set = LargeMovieDataset(path='../aclImdb_v1/', set='test', embedding_dic=word2vec_model.wv, word_embedding_size=word_embedding_size)
@@ -27,24 +36,10 @@ if __name__ == '__main__':
     validation_loader = DataLoader(validation_set, batch_size=32, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=32, shuffle=True)
 
-    print("======================================")
-    print("Data loaded")
-    print('Training set size:', len(train_set))
-    print('Validation set size:', len(validation_set))
-    print('Test set size:', len(test_set))
-    print("======================================")
-
-    cnnModel = SentimentCNN(vocab_size=10000, embedding_dim=word_embedding_size, hidden_dim=100)
-    criterion = nn.CrossEntropyLoss()
+    cnnModel = SentimentCNN(len_word=word_embedding_size, hidden_size=32, num_classes=2, dropout=0.5)
     optimizer = optim.Adam(cnnModel.parameters(), lr=0.001)
+    criterion = nn.CrossEntropyLoss()
 
-    trainingModelCNN(cnnModel, train_loader, validation_loader, criterion, optimizer, num_epochs=10)
+    print("Training")
 
-    # test accuracy with the test set
-    test_accuracy = 0
-    for inputs, labels in test_loader:
-        predictions = cnnModel(inputs)
-        _, predictions = torch.max(predictions, 2)
-        test_accuracy += torch.sum(predictions == labels) / labels.size()[0]
-    test_accuracy /= len(test_loader)
-    print('Test accuracy:', test_accuracy.item())
+    train(cnnModel, train_loader, validation_loader, optimizer, criterion, num_epochs=10)

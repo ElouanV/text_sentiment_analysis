@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import random
 from gensim.models import Word2Vec
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using {device}")
+
 nltk.download('punkt')
 
 
@@ -70,37 +73,20 @@ def preprocess_text(sentence):
     return words
 
 
-def rnn_forward_call(model, data, mask):
-    """
-
-    :param model:
-    """
-    out = [None] * data.shape[0]
-    hidden = torch.zeros(data.shape[0], 57)
-    for i in range(data.shape[1]):
-        character = data[:, i].squeeze(1)
-        out_, hidden = model(character, hidden)
-
-        for batch_id in range(data.shape[0]):
-            if mask[batch_id, i] == 1:
-                out[batch_id] = out_[batch_id].unsqueeze(0)
-    out = torch.cat(out, dim=0)
-    return out
 
 
-def train_val(run_type, criterion, dataloader, model, optimizer, device, epoch):
+
+def train_val(run_type, criterion, dataloader, model, optimizer):
     tot_loss = 0.0
     tot_acc = []
-    color = "green" if run_type == "train" else "blue"
-    with tqdm(dataloader, unit="batch", colour=color) as tepoch:
-        for batch in tepoch:
-            data = batch["data"]
-            label = batch["label"]
-            mask = batch["mask"]
-            # Put all tensors to device
-            data = data.to(device)
-            label = label.to(device)
-            mask = mask.to(device)
+    for mb_idx, batch in tqdm(enumerate(dataloader)):
+        data = batch["data"]
+        label = batch["label"]
+        mask = batch["mask"]
+
+        if run_type == "train":
+            # zero the parameter gradients
+            optimizer.zero_grad()
 
             # Forward pass
             if run_type == "train":
@@ -164,9 +150,9 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         )
         if (np.array(val_acc).mean() > best_eval_acc):
             best_eval_acc = np.array(val_acc).mean()
-            torch.save(model.state_dict(), os.path.join('checkpoints', model.__class__.__name__ + '.pth'))
-        # print(f"Val: {val_loss / len(val_dataloader)}, {np.array(val_acc).mean()}")
-        writer.add_scalar('Validation Loss', val_loss / len(val_dataloader), epoch)
+            torch.save(model.state_dict(), os.path.join('checkpoints', model.get_name() + '.pth'))
+        print(f"Val: {val_loss/len(val_dataloader)}, {np.array(val_acc).mean()}")
+        writer.add_scalar('Validation Loss', val_loss/len(val_dataloader), epoch)
         writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
     writer.close()
 
