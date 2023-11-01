@@ -39,7 +39,11 @@ class LargeMovieDataset(Dataset):
         Returns: dict: {"data": data, "mask": mask, "label": label}
         """
         sentence = self.sentences[idx]
-        label = self.labels[idx]
+
+        # Turn label to one-hot vector
+        label = np.zeros((1,2))
+        label[0][self.labels[idx]] = 1
+        label = torch.tensor(label, dtype=torch.float)
         sentence_data = np.zeros((self.max_len, self.word_embedding_size))
         sentence_mask = np.zeros(self.max_len)
         for i, word in enumerate(sentence):
@@ -51,6 +55,8 @@ class LargeMovieDataset(Dataset):
 
         data = torch.tensor(sentence_data, dtype=torch.float)
         mask = torch.tensor(sentence_mask, dtype=torch.float)
-        label = torch.tensor(label)
+        # Create a one-hot vector for the label
+
+
         return {"data": data, "mask": mask, "label": label}
 

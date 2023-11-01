@@ -24,7 +24,7 @@ def main(config):
     check_dir(MODELS_DIR)
     # Create dataset
     word_embedding_size = 64
-    prepare_word2vec(path=data_path, models_dir=MODELS_DIR, word_embedding_size=word_embedding_size)
+    # prepare_word2vec(path=data_path, models_dir=MODELS_DIR, word_embedding_size=word_embedding_size)
 
     word2vec_model = Word2Vec.load(f'{MODELS_DIR}/word2vec_model.model')
 
@@ -43,7 +43,7 @@ def main(config):
 
     # Train models
     model = TextCNN(len_word=word_embedding_size, hidden_size=128, num_classes=2)
-    criterion = torch.nn.CrossEntropyLoss()
+    criterion = torch.nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     train(model, train_dataloader, val_dataloader, criterion=criterion, optimizer=optimizer, num_epochs=10)
 

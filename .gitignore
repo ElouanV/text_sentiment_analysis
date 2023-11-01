@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 data/
 checkpoints/
-models/
+logs/
 *.pt
 *.pth
 *.pkl

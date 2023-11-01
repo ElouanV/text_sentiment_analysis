@@ -41,4 +41,4 @@ class SentimentTransformer(nn.Transformer):
         x = self.pos_encoder(x)
         x = self.encoder(x)
         x = self.linear(x)
-        return F.log_softmax(x, dim=-1)
+        return F.sigmoid(x)

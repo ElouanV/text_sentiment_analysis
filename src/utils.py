@@ -57,6 +57,7 @@ def word_cloud(train, filename):
 
 def check_dir(path):
     if not os.path.exists(path):
+        print('Creating directory: ', path)
         os.makedirs(path)
 
 
@@ -82,7 +83,7 @@ def train_val(run_type, criterion, dataloader, model, optimizer, device, epoch):
     with tqdm(dataloader, unit="batch", colour=color) as tepoch:
         for batch in tepoch:
             data = batch["data"]
-            label = batch["label"]
+            label = batch["label"].squeeze()
             mask = batch["mask"]
             # Put all tensors to device
             data = data.to(device)
@@ -105,10 +106,11 @@ def train_val(run_type, criterion, dataloader, model, optimizer, device, epoch):
 
             # Logging
             tot_loss += loss.item()
-            acc = (out.argmax(dim=1) == label).tolist()
+            acc = (out.argmax(dim=1) == label.argmax(dim=1)).tolist()
             tot_acc.extend(acc)
-            acc_str = f"{100. * np.array(acc).mean():.2f}%"
-            tepoch.set_postfix(loss=loss.item(), acc=acc_str, epoch=epoch, set=run_type)
+            acc_str = f"{100. * np.array(tot_acc).mean():.2f}%"
+            loss_str = f"{np.array(tot_loss).mean():.2f}"
+            tepoch.set_postfix(loss=loss_str, acc=acc_str, epoch=epoch, set=run_type)
     return tot_loss, tot_acc, criterion, dataloader, model, optimizer
 
 
@@ -144,7 +146,7 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         # print(f"Epoch {epoch}, loss: {epoch_loss / len(train_dataloader)}, accuracy: {np.array(epoch_acc).mean()}%")
         writer.add_scalar('Training Loss', epoch_loss / len(train_dataloader), epoch)
         writer.add_scalar('Training Accuracy', np.array(epoch_acc).mean(), epoch)
-        print(f'Train: loss: {epoch_loss / len(train_dataloader)}, accuracy: {np.array(epoch_acc).mean() * 100}%')
+        print(f'Train: loss: {epoch_loss / len(train_dataloader):.2f}, accuracy: {np.array(epoch_acc).mean() * 100:.2f}%')
         # Validation
         val_loss, val_acc, criterion, val_dataloader, model, optimizer = train_val(
             "val", criterion, val_dataloader, model, optimizer, device, epoch
@@ -152,7 +154,8 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
         if (np.array(val_acc).mean() > best_eval_acc):
             best_eval_acc = np.array(val_acc).mean()
             torch.save(model.state_dict(), os.path.join('checkpoints', model.__class__.__name__ + '.pth'))
-        print(f"Validation: loss: {val_loss / len(val_dataloader)}, accuracy: {np.array(val_acc).mean() * 100}%")
+
+        print(f"Validation: loss: {val_loss / len(val_dataloader):.2f}, accuracy: {np.array(val_acc).mean() * 100:.2f}%")
         writer.add_scalar('Validation Loss', val_loss / len(val_dataloader), epoch)
         writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
     writer.close()
