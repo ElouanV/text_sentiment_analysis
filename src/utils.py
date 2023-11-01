@@ -24,6 +24,8 @@ def seed_everything(seed=10):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
+
+
 seed_everything()
 
 
@@ -41,7 +43,8 @@ def get_sentences_data(path, max_len=1000):
 def word_cloud(train, filename):
     long_string = ','.join(list(train))
     # Create a WordCloud object
-    wordcloud = WordCloud(background_color="white", max_words=5000, contour_width=3, contour_color='steelblue',width=800, height=400)
+    wordcloud = WordCloud(background_color="white", max_words=5000, contour_width=3, contour_color='steelblue',
+                          width=800, height=400)
     # Generate a word cloud
     wordcloud.generate(long_string)
     # Visualize the word cloud
@@ -69,46 +72,43 @@ def preprocess_text(sentence):
     words = word_tokenize(sentence)
     return words
 
+
+
+
+
 def train_val(run_type, criterion, dataloader, model, optimizer):
     tot_loss = 0.0
     tot_acc = []
-
-    model = model.to(device)
-
     for mb_idx, batch in tqdm(enumerate(dataloader)):
         data = batch["data"]
         label = batch["label"]
         mask = batch["mask"]
 
-        data = data.to(device)
-        label = label.to(device)
-        mask = mask.to(device)
-
         if run_type == "train":
             # zero the parameter gradients
             optimizer.zero_grad()
 
-        # Forward pass
-        if run_type == "train":
-            out = model(data, mask)
-        elif run_type == "val":
-            with torch.no_grad():
+            # Forward pass
+            if run_type == "train":
+                optimizer.zero_grad()
                 out = model(data, mask)
+            elif run_type == "val":
+                with torch.no_grad():
+                    out = model(data, mask)
+            # Compute loss
+            loss = criterion(out, label)
+            if run_type == "train":
+                # Compute gradients
+                loss.backward()
+                # Backward pass - model update
+                optimizer.step()
 
-        # Compute loss
-        loss = criterion(out, label)
-
-        if run_type == "train":
-            # Compute gradients
-            loss.backward()
-
-            # Backward pass - model update
-            optimizer.step()
-
-        # Logging
-        tot_loss += loss.item()
-        acc = (out.argmax(dim=1) == label).tolist()
-        tot_acc.extend(acc)
+            # Logging
+            tot_loss += loss.item()
+            acc = (out.argmax(dim=1) == label).tolist()
+            tot_acc.extend(acc)
+            acc_str = f"{100. * np.array(acc).mean():.2f}%"
+            tepoch.set_postfix(loss=loss.item(), acc=acc_str, epoch=epoch, set=run_type)
     return tot_loss, tot_acc, criterion, dataloader, model, optimizer
 
 
@@ -130,28 +130,31 @@ def train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epo
     check_dir('checkpoints')
     check_dir('runs')
     best_eval_acc = 0.0
-    writer = SummaryWriter()
+    # Create a TensorBoard summary writer to log data with a specific filename model_name_datetime
+    writer = SummaryWriter(log_dir=f'runs/{model.__class__.__name__}_{datetime.now().strftime("%Y%m%d-%H%M%S")}')
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    print(f'Using device: {device} to train\n')
     for epoch in range(num_epochs):
         # Training
         epoch_loss, epoch_acc, criterion, train_dataloader, model, optimizer = train_val(
-            "train", criterion, train_dataloader, model, optimizer
+            "train", criterion, train_dataloader, model, optimizer, device, epoch
         )
-        print(
-            f"Epoch {epoch}: {epoch_loss/len(train_dataloader)}, {np.array(epoch_acc).mean()}"
-        )
-        writer.add_scalar('Training Loss', epoch_loss/len(train_dataloader), epoch)
+        # print(f"Epoch {epoch}, loss: {epoch_loss / len(train_dataloader)}, accuracy: {np.array(epoch_acc).mean()}%")
+        writer.add_scalar('Training Loss', epoch_loss / len(train_dataloader), epoch)
         writer.add_scalar('Training Accuracy', np.array(epoch_acc).mean(), epoch)
 
         # Validation
         val_loss, val_acc, criterion, val_dataloader, model, optimizer = train_val(
-            "val", criterion, val_dataloader, model, optimizer
+            "val", criterion, val_dataloader, model, optimizer, device, epoch
         )
         if (np.array(val_acc).mean() > best_eval_acc):
             best_eval_acc = np.array(val_acc).mean()
-            torch.save(model.state_dict(), os.path.join('checkpoints', model.__class__.__name__ + '.pt'))
+            torch.save(model.state_dict(), os.path.join('checkpoints', model.get_name() + '.pth'))
         print(f"Val: {val_loss/len(val_dataloader)}, {np.array(val_acc).mean()}")
         writer.add_scalar('Validation Loss', val_loss/len(val_dataloader), epoch)
         writer.add_scalar('Validation Accuracy', np.array(val_acc).mean(), epoch)
+    writer.close()
 
 
 def get_model_param(model):
@@ -171,9 +174,3 @@ def prepare_word2vec(path, models_dir, word_embedding_size=128):
     word2vec_model = Word2Vec(sentences, vector_size=word_embedding_size, window=3, min_count=1, workers=4)
     word2vec_model.save(f'{models_dir}/word2vec_model.model')
     return word2vec_model
-
-
-
-
-
-

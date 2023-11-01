@@ -4,18 +4,19 @@ from utils import get_sentences_data, check_dir, train, seed_everything, prepare
 from torch.utils.data import DataLoader
 import torch
 from models import TextClassificationTransformer
-
+from cnn import SentimentCNN
 seeds = [3, 7, 42, 666]
+import torch.optim as optim
 if __name__ == '__main__':
     BATCH_SIZE = 32
     train_path = 'data/aclImdb_v1/aclImdb/train'
     data_path = 'data/aclImdb_v1/aclImdb'
-    seed_everything(42)
+    seed_everything(3)
     MODELS_DIR = 'models'
     check_dir(MODELS_DIR)
     # Create dataset
-    word_embedding_size = 16
-    prepare_word2vec(path=data_path, models_dir=MODELS_DIR, word_embedding_size=128)
+    word_embedding_size = 64
+    prepare_word2vec(path=data_path, models_dir=MODELS_DIR, word_embedding_size=word_embedding_size)
 
     word2vec_model = Word2Vec.load(f'{MODELS_DIR}/word2vec_model.model')
 
@@ -33,10 +34,7 @@ if __name__ == '__main__':
     test_dataloader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=True)
 
     # Train model
-    model = TextClassificationTransformer(w_emsize=word_embedding_size, nhead=2, d_model=128, num_encoder_layers=3,
-                                          dropout=0.1, num_classes=2)
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    model = SentimentCNN(len_word=word_embedding_size, hidden_size=128, num_classes=2)
     criterion = torch.nn.CrossEntropyLoss()
-
-    train(model, train_dataloader, val_dataloader, optimizer, criterion, num_epochs=100)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    train(model, train_dataloader, val_dataloader, criterion=criterion, optimizer=optimizer, num_epochs=10)
