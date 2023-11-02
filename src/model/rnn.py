@@ -12,6 +12,10 @@ class SentimentRNN(nn.Module):
         self.fc = nn.Linear(self.hidden_size, 2)
 
     def forward(self, x, mask):
+        res = []
+        # batch_num = len(x)
+        # for batch_id in range(batch_num):
+        #     line = x[batch_id,:,: sum(mask[batch_id])]
         x, hiden = self.rnn(x)
         x = x[:, -1, :]
         x = self.fc(x)
