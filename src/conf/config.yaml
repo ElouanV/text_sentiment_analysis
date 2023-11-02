@@ -7,7 +7,8 @@ defaults:
 n_epoch: 10
 saving_path: 'models'
 data_path: 'data/aclImdb_v1/aclImdb/'
-batch_size: 32
-seeds:  [3, 7, 42, 666]
-word_embedding_sizes: [16,64,128]
-learning_rates: [0.01, 0.001]
+batch_size: 64
+seeds:  [3, 42]
+word_embedding_sizes: [64, 128]
+learning_rates: [0.001]
+run_id: 0

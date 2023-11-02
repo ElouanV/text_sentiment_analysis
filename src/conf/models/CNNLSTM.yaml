@@ -1,0 +1,8 @@
+name: 'cnnlstm'
+
+param:
+  num_filters: [ 32, 64 ]
+  hidden_size: [64, 128]
+  num_layers: [ 1]
+
+

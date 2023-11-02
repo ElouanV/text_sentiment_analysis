@@ -1,7 +1,7 @@
 from model.cnn import TextCNN, SequentialCNN
 from model.rnn import SentimentRNN, SentimentLSTM
 from model.mytransformers import SentimentTransformer
-
+from model.cnnlstm import SentimentCNNLSTM
 
 def load_textcnn(config, word_embedding_size, num_classes):
     """
@@ -56,6 +56,18 @@ def load_sequentialcnn(config, word_embedding_size, num_classes):
 def load_transformer(config, word_embedding_size, num_classes):
     return []
 
+def load_cnnlstm(config, word_embedding_size, num_classes):
+    num_filters = config.models.param['num_filters']
+    hidden_sizes = config.models.param['hidden_size']
+    num_layers = config.models.param['num_layers']
+    models = []
+    for hidden_size in hidden_sizes:
+        for num_layer in num_layers:
+            for num_filter in num_filters:
+                model = SentimentCNNLSTM(word_embedding_size=word_embedding_size, num_filters=num_filter, hidden_size=hidden_size, num_layer=num_layer)
+                models.append(model)
+    return models
+
 
 def get_models(model_name, config, word_embedding_size, num_classes):
     """
@@ -73,3 +85,6 @@ def get_models(model_name, config, word_embedding_size, num_classes):
         return load_sequentialcnn(config, word_embedding_size, num_classes)
     if model_name == 'transformer':
         return load_transformer(config, word_embedding_size, num_classes)
+    if model_name == 'cnnlstm':
+        return load_cnnlstm(config, word_embedding_size, num_classes)
+    raise Exception(f'Unknown models name: {model_name}')

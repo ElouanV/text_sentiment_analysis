@@ -2,7 +2,7 @@ import os.path
 
 from dataset import LargeMovieDataset
 from gensim.models import Word2Vec
-from utils import check_dir, train, seed_everything, prepare_word2vec, train_val
+from utils import check_dir, train, seed_everything, prepare_word2vec, test
 from torch.utils.data import DataLoader
 import torch
 import torch.optim as optim
@@ -14,6 +14,7 @@ import numpy as np
 from datetime import datetime
 import json
 
+
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(config):
     print(OmegaConf.to_yaml(config))
@@ -24,6 +25,9 @@ def main(config):
     n_epoch = config.n_epoch
     model_name = config.models.name
     model_params = config.models.param
+    run_id = config.run_id
+    # Print run id in green
+    print(f'\033[92mRun id: {run_id}\033[0m')
     print(f'Batch size: {BATCH_SIZE}')
     print(f'Word embedding sizes: {word_embedding_sizes}')
     print(f'Seeds: {seeds}')
@@ -32,10 +36,9 @@ def main(config):
     print(f'Model name: {model_name}')
     print(f'Model parameters: {model_params}')
 
-    MODELS_DIR = 'checkpoints'
-    train_path = 'data/aclImdb_v1/aclImdb/train'
+    models_dir = 'checkpoints'
     data_path = 'data/aclImdb_v1/aclImdb'
-    check_dir(MODELS_DIR)
+    check_dir(models_dir)
     check_dir('logs')
     check_dir('runs')
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -43,8 +46,10 @@ def main(config):
     for seed in seeds:
         seed_everything(seed)
         for word_embedding_size in word_embedding_sizes:
-            prepare_word2vec(path=data_path, models_dir=MODELS_DIR, word_embedding_size=word_embedding_size)
-            word2vec_model = Word2Vec.load(f'{MODELS_DIR}/word2vec_model.model')
+            word2vec_path = f'{models_dir}/word2vec_model_{word_embedding_size}.model'
+            if not os.path.exists(word2vec_path):
+                prepare_word2vec(path=data_path, save_path=word2vec_path, word_embedding_size=word_embedding_size)
+            word2vec_model = Word2Vec.load(word2vec_path)
 
             print(f'Loading dataset with word embedding size: {word_embedding_size}')
             train_set = LargeMovieDataset(path=data_path, set='train', embedding_dic=word2vec_model.wv,
@@ -60,7 +65,8 @@ def main(config):
             val_dataloader = DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=True)
             test_dataloader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=True)
 
-            models = get_models(model_name=config.models.name, config=config, word_embedding_size=word_embedding_size, num_classes=2)
+            models = get_models(model_name=config.models.name, config=config, word_embedding_size=word_embedding_size,
+                                num_classes=2)
             print('Training models...')
             for model in models:
                 for learning_rate in learning_rates:
@@ -70,22 +76,22 @@ def main(config):
                           num_epochs=n_epoch)
                     nb_parameters = sum(p.numel() for p in model.parameters())
                     # Test the mode by calling train_eval with test_dataloader and "test" mode
-                    tot_loss, tot_acc, criterion, dataloader, model, optimizer = train_val(
-                        "test", criterion, test_dataloader, model, None, device, 0
-                    )
+                    tot_loss, tot_acc, criterion, dataloader, model, stat = test(criterion, test_dataloader, model)
                     test_loss = tot_loss / len(dataloader)
                     test_acc = np.array(tot_acc).mean()
 
-                    model_parameters_names= model.get_str()
+                    model_parameters_names = model.get_str()
                     # Save the model
                     model_file_name = f'{config.models.name}_lr_{learning_rate}_s_{seed}_we_size_{word_embedding_size}_{model_parameters_names}.pth'
-                    torch.save(model.state_dict(), os.path.join(MODELS_DIR, model_file_name))
+                    torch.save(model.state_dict(), os.path.join(models_dir, model_file_name))
                     print(f'Model saved to {model_file_name}')
                     print(f'Number of parameters: {nb_parameters}')
                     print(f'Test loss: {test_loss}')
                     print(f'Test accuracy: {test_acc}')
 
                     model_dict = {
+                        'run_id': run_id,
+                        'model_name': model_name,
                         'lr': learning_rate,
                         'seed': seed,
                         'word_embedding_size': word_embedding_size,
@@ -93,14 +99,14 @@ def main(config):
                         'test_loss': test_loss,
                         'test_acc': test_acc,
                         'model_file_name': model_file_name,
-                        'model_parameters_names': model_parameters_names
+                        'model_parameters_names': model_parameters_names,
+                        'stat': stat,
                     }
                     with open(os.path.join('logs', f'model_dict_{datetime.now()}.json'), 'w+') as f:
                         f.write(json.dumps(model_dict, indent=4))
                         f.write('\n')
 
-    ##################################
-    # Train models
+
 if __name__ == '__main__':
     import sys
 

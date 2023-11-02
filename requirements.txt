@@ -7,3 +7,4 @@ tensorboard
 jupyter
 hydra-core
 omegaconf
+scikit-learn

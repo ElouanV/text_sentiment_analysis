@@ -42,3 +42,7 @@ class SentimentTransformer(nn.Transformer):
         x = self.encoder(x)
         x = self.linear(x)
         return F.sigmoid(x)
+
+    def get_str(self):
+        return f'd_model_{self.d_model}_n_head_{self.nhead}_n_layer_{self.num_encoder_layers}_dim_ff_{self.dim_feedforward}'
+
