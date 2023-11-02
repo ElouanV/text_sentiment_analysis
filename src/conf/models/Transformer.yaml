@@ -1,0 +1,4 @@
+name: 'rnn'
+param:
+  num_encoder_layers: [ 1, 3 ]
+

@@ -28,9 +28,9 @@ class SentimentTransformer(nn.Transformer):
     def __init__(self, n_input: int, n_output: int, d_model: int, nhead: int, num_encoder_layers: int,
                  dim_feedforward: int):
         super(SentimentTransformer, self).__init__(d_model=d_model, nhead=nhead,
-                                               num_encoder_layers=num_encoder_layers,
-                                               num_decoder_layers=num_encoder_layers,
-                                               dim_feedforward=dim_feedforward)
+                                                   num_encoder_layers=num_encoder_layers,
+                                                   num_decoder_layers=num_encoder_layers,
+                                                   dim_feedforward=dim_feedforward)
 
         self.emb = nn.Embedding(n_input, d_model)
         self.pos_encoder = PositionalEncoding(n_input)
@@ -45,4 +45,3 @@ class SentimentTransformer(nn.Transformer):
 
     def get_str(self):
         return f'd_model_{self.d_model}_n_head_{self.nhead}_n_layer_{self.num_encoder_layers}_dim_ff_{self.dim_feedforward}'
-

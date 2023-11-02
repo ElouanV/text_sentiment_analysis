@@ -20,7 +20,7 @@ class SentimentRNN(nn.Module):
         x = self.fc(x)
         return F.sigmoid(x)
     def get_str(self):
-        return f'h_dim_{self.hidden_size}_n_l_{self.num_layer}'
+        return f'h_dim_{self.hidden_size}_n_l_{self.num_layer}  '
 
 
 class SentimentLSTM(nn.Module):

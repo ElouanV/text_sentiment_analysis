@@ -1,3 +1,3 @@
 name: 'textcnn'
 param:
-  hidden_size: [ 32, 64, 128 ]
+  hidden_size: [32, 64, 128 ]
