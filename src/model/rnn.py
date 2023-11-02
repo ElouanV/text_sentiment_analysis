@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch
 
 class SentimentRNN(nn.Module):
     """Hyperparameters : [hiden_size, num_layer]"""
@@ -12,12 +13,10 @@ class SentimentRNN(nn.Module):
         self.fc = nn.Linear(self.hidden_size, 2)
 
     def forward(self, x, mask):
-        res = []
-        # batch_num = len(x)
-        # for batch_id in range(batch_num):
-        #     line = x[batch_id,:,: sum(mask[batch_id])]
         x, hiden = self.rnn(x)
-        x = x[:, -1, :]
+        #USE THE MASK 
+        x = [x[batch_id, int(sum(mask[batch_id])) -1, :] for batch_id in range(len(x))]
+        x = torch.stack((*x,), dim=0)
         x = self.fc(x)
         return F.sigmoid(x)
     def get_str(self):
@@ -37,7 +36,9 @@ class SentimentLSTM(nn.Module):
 
     def forward(self, x, mask):
         x, hiden = self.lstm(x)
-        x = x[:, -1, :]
+        #USE THE MASK 
+        x = [x[batch_id, int(sum(mask[batch_id])) -1, :] for batch_id in range(len(x))]
+        x = torch.stack((*x,), dim=0)
         x = self.fc(x)
         return F.sigmoid(x)
 
