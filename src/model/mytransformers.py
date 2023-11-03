@@ -1,7 +1,6 @@
 import math
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class PositionalEncoding(nn.Module):
@@ -24,24 +23,22 @@ class PositionalEncoding(nn.Module):
         return self.dropout(x)
 
 
-class SentimentTransformer(nn.Transformer):
-    def __init__(self, n_input: int, n_output: int, d_model: int, nhead: int, num_encoder_layers: int,
-                 dim_feedforward: int):
-        super(SentimentTransformer, self).__init__(d_model=d_model, nhead=nhead,
-                                                   num_encoder_layers=num_encoder_layers,
-                                                   num_decoder_layers=num_encoder_layers,
-                                                   dim_feedforward=dim_feedforward)
+class TransformerModel(nn.Transformer):
+    def __init__(self, n_input: int, d_model: int, nhead: int, num_encoder_layers: int, dim_feedforward: int):
+        super(TransformerModel, self).__init__(d_model=d_model, nhead=nhead,
+                                               num_encoder_layers=num_encoder_layers,
+                                               num_decoder_layers=num_encoder_layers,
+                                               dim_feedforward=dim_feedforward)
 
-        self.emb = nn.Embedding(n_input, d_model)
         self.pos_encoder = PositionalEncoding(n_input)
-        self.linear = nn.Linear(d_model, n_output)
+        self.linear = nn.Linear(d_model,
+                                2)  # Utilisation d'une couche de sortie avec 2 unités pour la classification binaire
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.emb(x)
+    def forward(self, x, mask):
+        x = x.long()
         x = self.pos_encoder(x)
-        x = self.encoder(x)
-        x = self.linear(x)
-        return F.sigmoid(x)
-
-    def get_str(self):
-        return f'd_model_{self.d_model}_n_head_{self.nhead}_n_layer_{self.num_encoder_layers}_dim_ff_{self.dim_feedforward}'
+        x = self.encoder(x, src_key_padding_mask=mask.transpose(0, 1))
+        x = x.mean(dim=1)  # Prendre la moyenne sur la dimension de la séquence (seq_length)
+        x = self.linear(x)  # La sortie aura maintenant une dimension de (batch_size, 2) pour la classification binaire
+        x = torch.sigmoid(x)  # Ajout de la fonction d'activation sigmoïde
+        return x
