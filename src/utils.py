@@ -21,6 +21,7 @@ from sklearn.metrics import classification_report
 
 nltk.download('punkt')
 
+LOGS_FOLDER = 'logs'
 
 def seed_everything(seed=10):
     random.seed(seed)
@@ -227,7 +228,6 @@ def prepare_word2vec(path, save_path, word_embedding_size=128):
     return word2vec_model
 
 def compare_model():
-    LOGS_FOLDER = 'logs'
     check_dir(LOGS_FOLDER)
 
     dfs = []
@@ -239,6 +239,7 @@ def compare_model():
                 data = json.load(file)
 
                 data['date'] = log.split('_')[2].split('.')[0]
+                data['file_name'] = log
                 type = ['neg', 'pos', 'macro avg', 'weighted avg']
                 score = ['precision', 'recall', 'f1-score', 'support']
                 for t in type:
@@ -252,14 +253,54 @@ def compare_model():
             dfs.append(df)
 
     if len(dfs) == 0:
-        print('[compare_model] No logs found')
-        return
-    
+        raise Exception(f'No logs found in {LOGS_FOLDER}')
+
     final_df = pd.concat(dfs, ignore_index=True)
+
+    final_df['date'] = pd.to_datetime(final_df['date'])
+    final_df = final_df.sort_values(by=['model_name', 'model_parameters_names', 'word_embedding_size', 'seed', 'date'], ascending=[True, True, True, True, False])
+
+    keys = ['model_name', 'model_parameters_names', 'word_embedding_size', 'seed']
+    final_df = final_df.drop_duplicates(subset=keys)
+
+    final_df['date'] = final_df['date'].dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    first_col = ['model_name', 'model_parameters_names', 'word_embedding_size', 'seed', 'date']
+    final_df = final_df[first_col + [col for col in final_df.columns if col not in first_col]]
+
     final_df.to_csv(os.path.join(LOGS_FOLDER, 'logs.csv'), index=False)
 
-def load_model_compare():
-    LOGS_FOLDER = 'logs'
+def load_model_compare(parse_log=False):
+    check_dir(LOGS_FOLDER)
+    if parse_log:
+        compare_model()
+    elif not os.path.exists(LOGS_FOLDER + "/logs.csv"):
+        print('Creating logs csv: ')
+        compare_model()
 
     df = pd.read_csv(os.path.join(LOGS_FOLDER, 'logs.csv'))
     return df
+
+def mean_logs():
+    check_dir(LOGS_FOLDER)
+    # here we reparse the logs on every call to mean_logs to make sure we have the latest logs (you can can disable that)
+    df_metrics = load_model_compare(True)
+    df_metadata = df_metrics.copy()
+    
+    metadata_cols = ['run_id', 'model_file_name', 'date', 'seed', 'file_name']
+    identity_cols = ['model_name', 'model_parameters_names', 'word_embedding_size']
+
+    df_metrics = df_metrics.drop(columns=metadata_cols)
+
+    df_metrics = df_metrics.groupby(identity_cols).mean().reset_index()
+
+    df_metadata = df_metadata[metadata_cols + identity_cols]
+    df_metadata = df_metadata.groupby(identity_cols).agg(lambda x: list(x)).reset_index()
+
+    df_metrics = df_metrics.merge(df_metadata, on=identity_cols, how='left')
+
+    df_metrics.to_csv(os.path.join(LOGS_FOLDER, 'logs_mean.csv'), index=False)
+
+if __name__ == "__main__":
+    compare_model()
+    mean_logs()
