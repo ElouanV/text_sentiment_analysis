@@ -5,6 +5,9 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import os
+import json
+import pandas as pd
+
 from torch.utils.tensorboard import SummaryWriter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
@@ -222,3 +225,41 @@ def prepare_word2vec(path, save_path, word_embedding_size=128):
     word2vec_model = Word2Vec(sentences, vector_size=word_embedding_size, window=3, min_count=1, workers=4)
     word2vec_model.save(save_path)
     return word2vec_model
+
+def compare_model():
+    LOGS_FOLDER = 'logs'
+    check_dir(LOGS_FOLDER)
+
+    dfs = []
+    for log in os.listdir(LOGS_FOLDER):
+        if log.endswith(".json"):
+            file_path = os.path.join(LOGS_FOLDER, log)
+
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+
+                data['date'] = log.split('_')[2].split('.')[0]
+                type = ['neg', 'pos', 'macro avg', 'weighted avg']
+                score = ['precision', 'recall', 'f1-score', 'support']
+                for t in type:
+                    for s in score:
+                        data[t.replace(' ', '_') + '_' + s] = data['stat'][t][s]
+
+                del data['stat']
+
+            df = pd.DataFrame([data])
+
+            dfs.append(df)
+
+    if len(dfs) == 0:
+        print('[compare_model] No logs found')
+        return
+    
+    final_df = pd.concat(dfs, ignore_index=True)
+    final_df.to_csv(os.path.join(LOGS_FOLDER, 'logs.csv'), index=False)
+
+def load_model_compare():
+    LOGS_FOLDER = 'logs'
+
+    df = pd.read_csv(os.path.join(LOGS_FOLDER, 'logs.csv'))
+    return df

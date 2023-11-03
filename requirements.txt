@@ -8,3 +8,4 @@ jupyter
 hydra-core
 omegaconf
 scikit-learn
+pandas
