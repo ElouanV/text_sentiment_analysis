@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 import torch
 import torch.optim as optim
 from model.cnnlstm import SentimentCNNLSTM
+from model.mytransformers import TransformerModel
 import hydra
 from omegaconf import OmegaConf
 
@@ -28,7 +29,7 @@ def main(config):
     word2vec_path = f'{MODELS_DIR}/word2vec_model_{word_embedding_size}.model'
     if not os.path.exists(word2vec_path):
         prepare_word2vec(path=data_path, save_path=word2vec_path, word_embedding_size=word_embedding_size)
-    word2vec_model = Word2Vec.load(f'{MODELS_DIR}/word2vec_model.model')
+    word2vec_model = Word2Vec.load(word2vec_path)
 
     train_set = LargeMovieDataset(path=data_path, set='train', embedding_dic=word2vec_model.wv,
                                   word_embedding_size=word_embedding_size)
@@ -44,18 +45,24 @@ def main(config):
     val_dataloader = DataLoader(val_set, batch_size=BATCH_SIZE, shuffle=True)
     test_dataloader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=True)
 
-    # Train models
-    model = SentimentCNNLSTM(word_embedding_size=word_embedding_size, num_filters=64, hidden_size=64, num_layer=1)
+    input_size = word_embedding_size
+    num_heads = 16  # You can adjust this based on your model design
+    num_layers = 4  # You can adjust this based on your model design
+    hidden_dim = 256 # You can adjust this based on your model design
+    dropout = 0.1  # You can adjust this based on your model design
+    num_classes = 2
+    model = TransformerModel(input_size, num_heads, num_layers, hidden_dim, num_classes, dropout)
+
     criterion = torch.nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.01)
-    # train(model, train_dataloader, val_dataloader, criterion=criterion, optimizer=optimizer, num_epochs=10)
+    train(model, train_dataloader, val_dataloader, criterion=criterion, optimizer=optimizer, num_epochs=10)
+
 
     # Load models
     model.load_state_dict(torch.load('checkpoints/SentimentCNNLSTM.pth'))
 
     # Test models on the test set and compute the accuracy
-    tot_loss, tot_acc, criterion, dataloader, model, stat = test(criterion, test_dataloader, model, device=torch.device(
-        "cuda:0" if torch.cuda.is_available() else "cpu"))
+    tot_loss, tot_acc, criterion, dataloader, model, stat = test(criterion, test_dataloader, model)
     print(stat)
 
 

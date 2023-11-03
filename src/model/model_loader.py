@@ -1,6 +1,6 @@
 from model.cnn import TextCNN, SequentialCNN
 from model.rnn import SentimentRNN, SentimentLSTM
-from model.mytransformers import SentimentTransformer
+from model.mytransformers import TransformerModel
 from model.cnnlstm import SentimentCNNLSTM
 
 def load_textcnn(config, word_embedding_size, num_classes):

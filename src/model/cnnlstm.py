@@ -36,7 +36,7 @@ class SentimentCNNLSTM(nn.Module):
         # Take the last hidden state of the lstm using the mask by taking the last non zero element
 
         seq_length = mask.sum(dim=1)
-        out = torch.zeros(x.shape[0], 1,x.shape[2])
+        out = torch.zeros(x.shape[0], 1,x.shape[2], device=x.device)
         for i in range(x.shape[0]):
             out[i] = x[i, seq_length[i].long() - 1, :]
         out = out.squeeze()
